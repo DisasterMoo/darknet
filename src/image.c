@@ -239,7 +239,7 @@ image **load_alphabet()
 void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes)
 {
     int i,j;
-    FILE *out_fd = fopen("prediction_details.txt", "w");
+    FILE *out_fd = fopen("prediction_output.txt", "w");
     if (out_fd == NULL)
     {
         printf("Error opening file!\n");
@@ -556,8 +556,6 @@ void show_image_cv(image p, const char *name, IplImage *disp)
     sprintf(buff, "%s", name);
 
     int step = disp->widthStep;
-    cvNamedWindow(buff, CV_WINDOW_NORMAL); 
-    //cvMoveWindow(buff, 100*(windows%10) + 200*(windows/10), 100*(windows%10));
     ++windows;
     for(y = 0; y < p.h; ++y){
         for(x = 0; x < p.w; ++x){
@@ -578,7 +576,6 @@ void show_image_cv(image p, const char *name, IplImage *disp)
         cvResize(buffer, disp, CV_INTER_LINEAR);
         cvReleaseImage(&buffer);
     }
-    cvShowImage(buff, disp);
 	{
 		CvSize size;
 		size.width = disp->width;
@@ -588,7 +585,7 @@ void show_image_cv(image p, const char *name, IplImage *disp)
 		if (output_video == NULL)
 		{
 			printf("\n SRC output_video = %p \n", output_video);
-			const char* output_name = "test_dnn_out.avi";
+			const char* output_name = "output.avi";
 			output_video = cvCreateVideoWriter(output_name, CV_FOURCC('D', 'I', 'V', 'X'), 25, size, 1);
 			printf("\n cvCreateVideoWriter, DST output_video = %p  \n", output_video);
 		}
