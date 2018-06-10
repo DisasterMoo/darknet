@@ -239,7 +239,14 @@ image **load_alphabet()
 void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes)
 {
     int i,j;
-
+    FILE *out_fd = fopen("prediction_details.txt", "w");
+    if (out_fd == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }else{
+        fseek(out_fd, 0, SEEK_END);
+    }
     for(i = 0; i < num; ++i){
         char labelstr[4096] = {0};
         int class = -1;
@@ -283,12 +290,14 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
             int left  = (b.x-b.w/2.)*im.w;
             int right = (b.x+b.w/2.)*im.w;
             int top   = (b.y-b.h/2.)*im.h;
-            int bot   = (b.y+b.h/2.)*im.h;
+            int bot   = (b.y+b.h/2.)*im.h;           
 
             if(left < 0) left = 0;
             if(right > im.w-1) right = im.w-1;
             if(top < 0) top = 0;
             if(bot > im.h-1) bot = im.h-1;
+
+            fprintf(out_fd, "Prediction: %-30s Location: %5d %5d %5d %5d\n", names[class], left, right, top, bot);
 
             draw_box_width(im, left, top, right, bot, width, red, green, blue);
             if (alphabet) {
@@ -307,6 +316,7 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
             }
         }
     }
+    fclose(out_fd);
 }
 
 void transpose_image(image im)
@@ -569,6 +579,21 @@ void show_image_cv(image p, const char *name, IplImage *disp)
         cvReleaseImage(&buffer);
     }
     cvShowImage(buff, disp);
+	{
+		CvSize size;
+		size.width = disp->width;
+		size.height = disp->height;
+
+		static CvVideoWriter* output_video = NULL;    // cv::VideoWriter output_video;
+		if (output_video == NULL)
+		{
+			printf("\n SRC output_video = %p \n", output_video);
+			const char* output_name = "test_dnn_out.avi";
+			output_video = cvCreateVideoWriter(output_name, CV_FOURCC('D', 'I', 'V', 'X'), 25, size, 1);
+			printf("\n cvCreateVideoWriter, DST output_video = %p  \n", output_video);
+		}
+		cvWriteFrame(output_video, disp);
+	}
 }
 #endif
 
