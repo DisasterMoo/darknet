@@ -236,20 +236,29 @@ image **load_alphabet()
     return alphabets;
 }
 
+FILE *out_fd = NULL;
+int framenumb = 0;
+
+FILE *checkOutputFile()
+{
+	if (out_fd == NULL){
+		out_fd = fopen("prediction_output.txt", "w");
+	}
+	if (out_fd == NULL){
+		printf("Error loading output file!\n");
+        	exit(1);
+	}
+	return out_fd;
+}
+
 void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes)
 {
-    int i,j;
-    FILE *out_fd = fopen("prediction_output.txt", "w");
-    if (out_fd == NULL)
-    {
-        printf("Error opening file!\n");
-        exit(1);
-    }else{
-        fseek(out_fd, 0, SEEK_END);
-    }
+    int i,j, bline = 0;
+    fprintf(checkOutputFile(), "frame %d = {", framenumb);
     for(i = 0; i < num; ++i){
         char labelstr[4096] = {0};
         int class = -1;
+	float probab = 0;
         for(j = 0; j < classes; ++j){
             if (dets[i].prob[j] > thresh){
                 if (class < 0) {
@@ -260,6 +269,7 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
                     strcat(labelstr, names[j]);
                 }
                 printf("%s: %.0f%%\n", names[j], dets[i].prob[j]*100);
+		probab = dets[i].prob[j]*100;
             }
         }
         if(class >= 0){
@@ -296,8 +306,9 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
             if(right > im.w-1) right = im.w-1;
             if(top < 0) top = 0;
             if(bot > im.h-1) bot = im.h-1;
-
-            fprintf(out_fd, "Prediction: %-30s Location: %5d %5d %5d %5d\n", names[class], left, right, top, bot);
+	    if(bline == 1)fprintf(checkOutputFile(), ";");
+            fprintf(checkOutputFile(), "[Class: %s; Prob: %.0f; Pos: %d; %d; %d; %d]", names[class], probab, left, right, top, bot);
+	    bline = 1;
 
             draw_box_width(im, left, top, right, bot, width, red, green, blue);
             if (alphabet) {
@@ -316,7 +327,8 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
             }
         }
     }
-    fclose(out_fd);
+    fprintf(checkOutputFile(), "}\n");
+    framenumb++;
 }
 
 void transpose_image(image im)
